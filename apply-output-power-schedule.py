@@ -10,17 +10,15 @@ NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
 GMAIL_SETTINGS_FILE = 'gmail_settings.json'
 
 class SmartPlugDummy:
-    ON = 'ON'
-    OFF = 'OFF'
     def __init__(self, initial_state):
         self._state = initial_state
     @property
     def state(self):
         return self._state
     def turn_on(self):
-        self._state = SmartPlugDummy.ON
+        self._state = 'ON'
     def turn_off(self):
-        self._state = SmartPlugDummy.OFF
+        self._state = 'OFF'
 
 if __name__ == '__main__':
     logging.basicConfig(filename='powermgr.log',
@@ -28,7 +26,9 @@ if __name__ == '__main__':
                         format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-    plug = SmartPlugDummy(SmartPlugDummy.ON)
+    plug = SmartPlugDummy('ON')
+    plug.ON = 'ON'
+    plug.OFF = 'OFF'
     schedule = SimplePowerSchedule(POWER_SCHEDULE_FILE)
     watcher = EmailWatcher(GMAIL_SETTINGS_FILE, GMAIL_SETTINGS_FILE)
 
