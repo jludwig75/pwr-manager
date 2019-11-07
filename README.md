@@ -3,12 +3,12 @@
 This project is designed to manage a KASA SmartPlug from a Linux server (i.e. Raspberry Pi). The project is designed to be run from an hourly chron job.
 
 To setup:
-1. Copy gmail_settings.template.json to gmail_settings.json
-2. Put gmail credentials for the sending account in gmail_settings.json
+1. Copy gmail_settings.template.json to /etc/pwr-manager/gmail_settings.json
+2. Put gmail credentials for the sending account in /etc/pwr-manager/gmail_settings.json
 3. Setup the sending gmail account to "Allow less secure apps" (I used a separate gmail account just for sending so I didn't have to set this on my general use account.
-4. Copy power-schedule.template.json to power-schedule.json
-5. Set your desired schedule in power-schedule.json. See schedule documentation below.
-6. Set up a chron job to run apply-output-power-schedule.py hourly
+4. Copy power-schedule.template.json to /etc/pwr-manager/power-schedule.json
+5. Set your desired schedule in /etc/pwr-manager/power-schedule.json. See schedule documentation below.
+6. Set up a chron job to run apply-output-power-schedule.py hourly as root.
 
 Schedule Settings
 ===
