@@ -4,6 +4,19 @@ from powerschedule import SimplePowerSchedule
 from emailwatcher import EmailWatcher
 import logging
 import sys
+import os
+
+def settings_path(path):
+    if os.geteuid() == 0:
+        return os.path.join('/etc/pwr-manager', path)
+    else:
+        return os.path.join(os.path.dirname(sys.argv[0]), path)
+
+def log_path(path):
+    if os.geteuid() == 0:
+        return os.path.join('/var/log', path)
+    else:
+        return os.path.join(os.path.dirname(sys.argv[0]), path)
 
 POWER_SCHEDULE_FILE = 'power-schedule.json'
 NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
@@ -21,7 +34,7 @@ class SmartPlugDummy:
         self._state = 'OFF'
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='powermgr.log',
+    logging.basicConfig(filename=log_path('powermgr.log'),
                         level=logging.DEBUG,
                         format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -29,8 +42,8 @@ if __name__ == '__main__':
     plug = SmartPlugDummy('ON')
     plug.ON = 'ON'
     plug.OFF = 'OFF'
-    schedule = SimplePowerSchedule(POWER_SCHEDULE_FILE)
-    watcher = EmailWatcher(GMAIL_SETTINGS_FILE, GMAIL_SETTINGS_FILE)
+    schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
+    watcher = EmailWatcher(settings_path(GMAIL_SETTINGS_FILE), NOTIFICATION_EMAIL_ADDRESS)
 
     manager = PlugPowerManager(schedule, plug, watcher)
 
