@@ -3,7 +3,7 @@
 This project is designed to manage a KASA SmartPlug from a Linux server (i.e. Raspberry Pi). The project is designed to be run from an hourly chron job.
 
 To setup:
-1. Install the pyHS100 library: sudo pip3 install pyHS100
+1. Install the pyHS100 library: sudo pip3 install pyHS100. https://github.com/GadgetReactor/pyHS100
 2. Copy gmail_settings.template.json to /etc/pwr-manager/gmail_settings.json
 3. Put gmail credentials for the sending account in /etc/pwr-manager/gmail_settings.json
 4. Setup the sending gmail account to "Allow less secure apps" (I used a separate gmail account just for sending so I didn't have to set this on my general use account.
