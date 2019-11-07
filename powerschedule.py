@@ -13,8 +13,18 @@ Expected schedule format:
 All schedules that have a value are "anded" together.
 All empty schedules are ignored. If all schedules are
 empty, the plug will always be on.
-It likely makes no sense to combine days_of_week and
-days_of_month, but, if both are set, they will be combined.
+Slightly more complex example (first Saturday of every month):
+{
+    "days_of_week": ["Sat"],
+    "hours_of_day": [],
+    "days_of_month": [1, 2, 3, 4, 5, 6, 7]
+}
+All three can be combined (first Saturday of every month during day):
+{
+    "days_of_week": ["Sat"],
+    "hours_of_day": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+    "days_of_month": [1, 2, 3, 4, 5, 6, 7]
+}
 """
 class SimplePowerSchedule:
     class _RealClock:
