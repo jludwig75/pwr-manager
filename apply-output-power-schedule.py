@@ -9,8 +9,8 @@ import os
 ROOT_SETTINGS_PATH = '/etc/pwr-manager'
 ROOT_LOG_PATH = '/var/log'
 POWER_SCHEDULE_FILE = 'power-schedule.json'
-NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
 GMAIL_SETTINGS_FILE = 'gmail_settings.json'
+NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
 
 def settings_path(path):
     if os.geteuid() == 0:
