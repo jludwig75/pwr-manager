@@ -5,12 +5,13 @@ from emailwatcher import EmailWatcher
 import logging
 import sys
 import os
+import json
 
 ROOT_SETTINGS_PATH = '/etc/pwr-manager'
 ROOT_LOG_PATH = '/var/log'
+SETTINGS_FILE = 'settings.json'
 POWER_SCHEDULE_FILE = 'power-schedule.json'
 GMAIL_SETTINGS_FILE = 'gmail_settings.json'
-NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
 
 def settings_path(path):
     if os.geteuid() == 0:
@@ -41,11 +42,14 @@ if __name__ == '__main__':
                         format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
+    with open(settings_path(SETTINGS_FILE), 'rt') as settings_file:
+        settings = json.loads(settings_file.read())
+
     plug = SmartPlugDummy('ON')
     plug.ON = 'ON'
     plug.OFF = 'OFF'
     schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
-    watcher = EmailWatcher(settings_path(GMAIL_SETTINGS_FILE), NOTIFICATION_EMAIL_ADDRESS)
+    watcher = EmailWatcher(settings_path(GMAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'])
 
     manager = PlugPowerManager(schedule, plug, watcher)
 
