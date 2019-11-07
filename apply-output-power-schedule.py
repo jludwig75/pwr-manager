@@ -6,21 +6,23 @@ import logging
 import sys
 import os
 
+ROOT_SETTINGS_PATH = '/etc/pwr-manager'
+ROOT_LOG_PATH = '/var/log'
+POWER_SCHEDULE_FILE = 'power-schedule.json'
+NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
+GMAIL_SETTINGS_FILE = 'gmail_settings.json'
+
 def settings_path(path):
     if os.geteuid() == 0:
-        return os.path.join('/etc/pwr-manager', path)
+        return os.path.join(ROOT_SETTINGS_PATH, path)
     else:
         return os.path.join(os.path.dirname(sys.argv[0]), path)
 
 def log_path(path):
     if os.geteuid() == 0:
-        return os.path.join('/var/log', path)
+        return os.path.join(ROOT_LOG_PATH, path)
     else:
         return os.path.join(os.path.dirname(sys.argv[0]), path)
-
-POWER_SCHEDULE_FILE = 'power-schedule.json'
-NOTIFICATION_EMAIL_ADDRESS = 'jr.ludwig@gmail.com'
-GMAIL_SETTINGS_FILE = 'gmail_settings.json'
 
 class SmartPlugDummy:
     def __init__(self, initial_state):
