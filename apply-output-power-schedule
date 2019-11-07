@@ -2,6 +2,7 @@
 from plugpwrmgr import PlugPowerManager
 from powerschedule import SimplePowerSchedule
 from emailwatcher import EmailWatcher
+from pyHS100 import SmartPlug
 import logging
 import sys
 import os
@@ -45,7 +46,10 @@ if __name__ == '__main__':
     with open(settings_path(SETTINGS_FILE), 'rt') as settings_file:
         settings = json.loads(settings_file.read())
 
+    logging.info('Managing plug at address %s' % settings['PLUG_ADDRESS'])
+    
     plug = SmartPlugDummy('ON')
+    #plug = SmartPlug(settings['PLUG_ADDRESS'])
     plug.ON = 'ON'
     plug.OFF = 'OFF'
     schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
