@@ -21,7 +21,8 @@ class PlugPowerManager:
                 if self._plug.state == self._plug.OFF:
                     logging.info('Plug should be on, but is off. Turning plug on')
                     self._plug.turn_on()
-                    if self._plug.state != self._plug.OFF:
+                    if self._plug.state != self._plug.ON:
+                        assert self._plug.state == self._plug.OFF
                         logging.error("Unable to turn plug on")
                         self._watcher.notify_event(CANNOT_TURN_ON_MESSAGE)
                     else:
@@ -36,7 +37,8 @@ class PlugPowerManager:
                 if self._plug.state == self._plug.ON:
                     logging.info('Plug should be off, but is on. Turning plug off')
                     self._plug.turn_off()
-                    if self._plug.state != self._plug.ON:
+                    if self._plug.state != self._plug.OFF:
+                        assert self._plug.state == self._plug.ON
                         logging.error("Unable to turn plug off")
                         self._watcher.notify_event(CANNOT_TURN_OFF_MESSAGE)
                     else:
@@ -47,3 +49,4 @@ class PlugPowerManager:
                     logging.info("Plug is already off")
         except Exception as e:
             logging.error('Exception applying power schedule: %s' % e)
+            raise

@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
-from plugpwrmgr import *
+from plugpwrmgr import PlugPowerManager
+from powerschedule import SimplePowerSchedule
 import logging
 import sys
 
-class PlugPowerSchduleDummy:
-    ON = 'ON'
-    OFF = 'OFF'
-    def __init__(self, expected_state):
-        self._expected_state = expected_state
-    @property
-    def expected_state(self):
-        return self._expected_state
+POWER_SCHEDULE_FILE = 'power-schedule.json'
 
 class SmartPlugDummy:
     ON = 'ON'
     OFF = 'OFF'
-    def __init__(self, name, initial_state):
+    def __init__(self, initial_state):
         self._state = initial_state
     @property
     def state(self):
@@ -36,11 +30,10 @@ logging.basicConfig(filename='powermgr.log',
                     format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-plug = SmartPlugDummy('172.18.1.41', SmartPlugDummy.OFF)
-schedule = PlugPowerSchduleDummy(PlugPowerSchduleDummy.ON)
+plug = SmartPlugDummy(SmartPlugDummy.OFF)
+schedule = SimplePowerSchedule(POWER_SCHEDULE_FILE)
 watcher = PowerWatcherDummy()
 
 manager = PlugPowerManager(schedule, plug, watcher)
 
 manager.apply_schedule()
-
