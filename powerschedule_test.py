@@ -125,6 +125,65 @@ class SimplePowerScheduleTest(unittest.TestCase):
         clock.set_datetime(datetime(2019, 11, day=30))
         self.assertEqual(sched.expected_state, sched.OFF)
 
+    def test_day_of_the_month_and_hour_of_day(self):
+        TEST_SCHED_FILE_NAME = 'test-sched4.json'
+        self._gen_sched_file(TEST_SCHED_FILE_NAME, days_of_month = [3], hours_of_day = [0])
+        dt = datetime(2019, 11, day=7)
+        clock = FixedDummyClock(dt)
+
+        sched = SimplePowerSchedule(TEST_SCHED_FILE_NAME, clock)
+        os.unlink(TEST_SCHED_FILE_NAME)
+
+        # non-matching day, non-matching hour
+        clock.set_datetime(datetime(2019, 11, day=19, hour=17))
+        self.assertEqual(sched.expected_state, sched.OFF)
+
+        # non-matching day, matching hour
+        clock.set_datetime(datetime(2019, 11, day=19, hour=0))
+        self.assertEqual(sched.expected_state, sched.OFF)
+
+        # matching day, non-matching hour
+        clock.set_datetime(datetime(2019, 11, day=3, hour=17))
+        self.assertEqual(sched.expected_state, sched.OFF)
+
+        # matching day, matching hour
+        clock.set_datetime(datetime(2019, 11, day=3, hour=0))
+        self.assertEqual(sched.expected_state, sched.ON)
+
+
+    def test_day_of_the_week_and_hour_of_day(self):
+        TEST_SCHED_FILE_NAME = 'test-sched4.json'
+        self._gen_sched_file(TEST_SCHED_FILE_NAME, days_of_week = ['Thu'], hours_of_day = [0])
+        dt = datetime(2019, 11, day=7)
+        clock = FixedDummyClock(dt)
+
+        sched = SimplePowerSchedule(TEST_SCHED_FILE_NAME, clock)
+        os.unlink(TEST_SCHED_FILE_NAME)
+
+        # 2019-11-6 was a Wednesday
+        # 2019-11-6 was a Thursday
+
+        # non-matching day, non-matching hour
+        clock.set_datetime(datetime(2019, 11, day=6, hour=17))
+        self.assertEqual(sched.expected_state, sched.OFF)
+
+        # non-matching day, matching hour
+        clock.set_datetime(datetime(2019, 11, day=6, hour=0))
+        self.assertEqual(sched.expected_state, sched.OFF)
+
+        # matching day, non-matching hour
+        clock.set_datetime(datetime(2019, 11, day=7, hour=17))
+        self.assertEqual(sched.expected_state, sched.OFF)
+
+        # matching day, matching hour
+        clock.set_datetime(datetime(2019, 11, day=7, hour=0))
+        self.assertEqual(sched.expected_state, sched.ON)
+
+        # matching day two weeks later, matching hour
+        clock.set_datetime(datetime(2019, 11, day=7 + 14, hour=0))
+        self.assertEqual(sched.expected_state, sched.ON)
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.CRITICAL)
     unittest.main()
