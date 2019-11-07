@@ -49,4 +49,3 @@ class PlugPowerManager:
                     logging.info("Plug is already off")
         except Exception as e:
             logging.error('Exception applying power schedule: %s' % e)
-            raise
