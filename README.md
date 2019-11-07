@@ -1,8 +1,6 @@
 # pwr-manager - Manage KASA Smart Plugs
 
-This project is designed to manage a KASA SmartPlug from a Linux server (i.e. Raspberry Pi).
-
-The project is designed to be run from an hourly chron job.
+This project is designed to manage a KASA SmartPlug from a Linux server (i.e. Raspberry Pi). The project is designed to be run from an hourly chron job.
 
 To setup:
 1. Copy gmail_settings.template.json to gmail_settings.json
