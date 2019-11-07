@@ -21,15 +21,16 @@ Expected schedule format:
     "hours_of_day": [0, 1, 2, 3, 4, 5, 6, 20, 21, 22, 23],
     "days_of_month": [1, 15]
 }
-All schedules that have a value are "anded" together.
-All empty schedules are ignored. If all schedules are
-empty, the plug will always be on.
+
+All schedules that have a value are "anded" together. All empty schedules are ignored. If all schedules are empty, the plug will always be on.
+
 Slightly more complex example (first Saturday of every month):
 {
     "days_of_week": ["Sat"],
     "hours_of_day": [],
     "days_of_month": [1, 2, 3, 4, 5, 6, 7]
 }
+
 All three can be combined (first Saturday of every month during day):
 {
     "days_of_week": ["Sat"],
