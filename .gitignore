@@ -1,5 +1,5 @@
 *.pyc
 *.log
-gmail_settings.json
+mail_settings.json
 power-schedule.json
 settings.json

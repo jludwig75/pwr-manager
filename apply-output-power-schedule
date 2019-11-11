@@ -7,12 +7,13 @@ import logging
 import sys
 import os
 import json
+import argparse
 
 ROOT_SETTINGS_PATH = '/etc/pwr-manager'
 ROOT_LOG_PATH = '/var/log'
 SETTINGS_FILE = 'settings.json'
 POWER_SCHEDULE_FILE = 'power-schedule.json'
-GMAIL_SETTINGS_FILE = 'gmail_settings.json'
+MAIL_SETTINGS_FILE = 'mail_settings.json'
 
 def settings_path(path):
     if os.geteuid() == 0:
@@ -43,17 +44,23 @@ if __name__ == '__main__':
                         format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
+    parser = argparse.ArgumentParser(description='Apply power schedule to KASA Smart Plugs')
+    parser.add_argument('-s', '--simulate', type=str, default=None, help='simulat a plug with the given initial state')
+    args = parser.parse_args()
+
     with open(settings_path(SETTINGS_FILE), 'rt') as settings_file:
         settings = json.loads(settings_file.read())
 
     logging.info('Managing plug at address %s' % settings['PLUG_ADDRESS'])
     
-    plug = SmartPlugDummy('ON')
-    #plug = SmartPlug(settings['PLUG_ADDRESS'])
+    if args.simulate == None:
+        plug = SmartPlug(settings['PLUG_ADDRESS'])
+    else:
+        plug = SmartPlugDummy(args.simulate)
     plug.ON = 'ON'
     plug.OFF = 'OFF'
     schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
-    watcher = EmailWatcher(settings_path(GMAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'])
+    watcher = EmailWatcher(settings_path(MAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'])
 
     manager = PlugPowerManager(schedule, plug, watcher)
 

@@ -4,9 +4,9 @@ This project is designed to manage a KASA SmartPlug from a Linux server (i.e. Ra
 
 To setup:
 1. Install the pyHS100 library: sudo pip3 install pyHS100. https://github.com/GadgetReactor/pyHS100
-2. Copy gmail_settings.template.json to /etc/pwr-manager/gmail_settings.json
-3. Put gmail credentials for the sending account in /etc/pwr-manager/gmail_settings.json
-4. Setup the sending gmail account to "Allow less secure apps" (I used a separate gmail account just for sending so I didn't have to set this on my general use account.
+2. Copy mail_settings.template.json to /etc/pwr-manager/mail_settings.json
+3. Put mail credentials for the sending account in /etc/pwr-manager/mail_settings.json
+4. If you are using gmail, setup the sending gmail account to "Allow less secure apps" (I used a separate gmail account just for sending so I didn't have to set this on my general use account.
 5. Copy power-schedule.template.json to /etc/pwr-manager/power-schedule.json
 6. Set your desired schedule in /etc/pwr-manager/power-schedule.json. See schedule documentation below.
 7. Copy settings.template.json to /etc/pwr-manager/settings.json
