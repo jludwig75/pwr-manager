@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+from plugpwrmgr import PlugPowerManager
+from powerschedule import SimplePowerSchedule
+from emailwatcher import EmailWatcher
+from pyHS100 import SmartPlug
+from testsmtpd import SSLSMTPServer, FakeCredentialValidator
+import logging
+import sys
+import os
+import json
+import argparse
+import time
+from datetime import datetime
+
+SETTINGS_FILE = 'settings.json'
+POWER_SCHEDULE_FILE = 'power-schedule.json'
+MAIL_SETTINGS_FILE = 'mail_settings.json'
+
+def settings_path(path):
+    return os.path.join(os.path.dirname(sys.argv[0]), path)
+
+def log_path(path):
+    return os.path.join(os.path.dirname(sys.argv[0]), path)
+
+def _gen_sched_file(days_of_week = [], hours_of_day = [], days_of_month = []):
+    sched = {'days_of_week': days_of_week, 'hours_of_day': hours_of_day, 'days_of_month': days_of_month}
+    with open(POWER_SCHEDULE_FILE, 'wt') as sched_file:
+        sched_file.write(json.dumps(sched))
+
+def test_setup(plug_address, scheduled_for_on = False, device_on_before_test = False):
+    os.system('cp mail_settings.test.json mail_settings.json')
+    plug = SmartPlug(plug_address)
+    if device_on_before_test:
+        plug.turn_on()
+    else:
+        plug.turn_off()
+    today = datetime.now().day
+    if not scheduled_for_on:
+        if today == 1:
+            today = 28
+        else:
+            today = 1
+    _gen_sched_file(days_of_month = [today])
+
+def power_manager_test(plug_address, scheduled_for_on = False, device_on_before_test = False):
+    test_setup(settings['PLUG_ADDRESS'], scheduled_for_on=scheduled_for_on, device_on_before_test=device_on_before_test)
+
+    logging.info('Managing plug at address %s' % plug_address)
+    plug = SmartPlug(plug_address)
+
+    plug.ON = 'ON'
+    plug.OFF = 'OFF'
+    schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
+    watcher = EmailWatcher(settings_path(MAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'])
+
+    manager = PlugPowerManager(schedule, plug, watcher)
+
+    manager.apply_schedule()
+
+    if scheduled_for_on:
+        assert plug.state == 'ON'
+    else:
+        assert plug.state == 'OFF'
+
+
+if __name__ == '__main__':
+    logging.basicConfig(filename=log_path('powermgr.log'),
+                        level=logging.DEBUG,
+                        format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
+    logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+    with open(settings_path(SETTINGS_FILE), 'rt') as settings_file:
+        settings = json.loads(settings_file.read())
+
+    server = SSLSMTPServer(
+        ('0.0.0.0', 1025),
+        None,
+        require_authentication=True,
+        ssl=True,
+        certfile='server.crt',
+        keyfile='server.key',
+        credential_validator=FakeCredentialValidator(),
+        maximum_execution_time = 1.0
+        )
+    server.init()
+    server.start()
+
+    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=False, device_on_before_test=False)
+    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=False, device_on_before_test=True)
+    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=True, device_on_before_test=False)
+    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=True, device_on_before_test=True)
+
+    server.stop()
