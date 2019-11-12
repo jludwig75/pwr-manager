@@ -119,5 +119,4 @@ if __name__ == '__main__':
     logger.setLevel(logging.CRITICAL)
     logging.basicConfig(level=logging.CRITICAL)
     unittest.main()
-    sys.exit(0)
 
