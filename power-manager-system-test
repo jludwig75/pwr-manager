@@ -3,7 +3,7 @@ from plugpwrmgr import PlugPowerManager
 from powerschedule import SimplePowerSchedule
 from emailwatcher import EmailWatcher
 from pyHS100 import SmartPlug
-from testsmtpd import SSLSMTPServer, FakeCredentialValidator
+from testsmtpd import SSLSMTPServer, TestCredentialValidator
 import logging
 import sys
 import os
@@ -11,83 +11,113 @@ import json
 import argparse
 import time
 from datetime import datetime
+import unittest
+import warnings
+import secure_smtpd
 
 SETTINGS_FILE = 'settings.json'
 POWER_SCHEDULE_FILE = 'power-schedule.json'
 MAIL_SETTINGS_FILE = 'mail_settings.json'
 
-def settings_path(path):
-    return os.path.join(os.path.dirname(sys.argv[0]), path)
+class SmartPlugPowerManagerSystemTest(unittest.TestCase):
+    _smtp_server = None
+    def __init__(self, *args, **kwargs):
+        super(SmartPlugPowerManagerSystemTest, self).__init__(*args, **kwargs)
+        with open(SETTINGS_FILE, 'rt') as settings_file:
+            self._settings = json.loads(settings_file.read())
 
-def log_path(path):
-    return os.path.join(os.path.dirname(sys.argv[0]), path)
+        if SmartPlugPowerManagerSystemTest._smtp_server == None:
+            SmartPlugPowerManagerSystemTest._smtp_server = SSLSMTPServer(
+                ('0.0.0.0', 1025),
+                None,
+                require_authentication=True,
+                ssl=True,
+                certfile='server.crt',
+                keyfile='server.key',
+                credential_validator=TestCredentialValidator(),
+                maximum_execution_time = 1.0
+                )
+            SmartPlugPowerManagerSystemTest._smtp_server.start()
 
-def _gen_sched_file(days_of_week = [], hours_of_day = [], days_of_month = []):
-    sched = {'days_of_week': days_of_week, 'hours_of_day': hours_of_day, 'days_of_month': days_of_month}
-    with open(POWER_SCHEDULE_FILE, 'wt') as sched_file:
-        sched_file.write(json.dumps(sched))
+    def setUp(self):
+        warnings.simplefilter('ignore', DeprecationWarning)
 
-def test_setup(plug_address, scheduled_for_on = False, device_on_before_test = False):
-    os.system('cp mail_settings.test.json mail_settings.json')
-    plug = SmartPlug(plug_address)
-    if device_on_before_test:
-        plug.turn_on()
-    else:
-        plug.turn_off()
-    today = datetime.now().day
-    if not scheduled_for_on:
-        if today == 1:
-            today = 28
+    def _gen_sched_file(self, days_of_week = [], hours_of_day = [], days_of_month = []):
+        sched = {'days_of_week': days_of_week, 'hours_of_day': hours_of_day, 'days_of_month': days_of_month}
+        with open(POWER_SCHEDULE_FILE, 'wt') as sched_file:
+            sched_file.write(json.dumps(sched))
+
+    def _apply_power_schedule(self, plug_address):
+        plug = SmartPlug(plug_address)
+        plug.ON = 'ON'
+        plug.OFF = 'OFF'
+
+        schedule = SimplePowerSchedule(POWER_SCHEDULE_FILE)
+
+        watcher = EmailWatcher(MAIL_SETTINGS_FILE, self._settings['NOTIFICATION_EMAIL_ADDRESS'])
+
+        manager = PlugPowerManager(schedule, plug, watcher)
+
+        manager.apply_schedule()
+
+    def _setup_test(self, plug_address, scheduled_for_on = False, device_on_before_test = False):
+        os.system('cp mail_settings.test.json mail_settings.json')
+        plug = SmartPlug(plug_address)
+        if device_on_before_test:
+            plug.turn_on()
         else:
-            today = 1
-    _gen_sched_file(days_of_month = [today])
+            plug.turn_off()
+        today = datetime.now().day
+        if not scheduled_for_on:
+            if today == 1:
+                today = 28
+            else:
+                today = 1
+        self._gen_sched_file(days_of_month = [today])
 
-def power_manager_test(plug_address, scheduled_for_on = False, device_on_before_test = False):
-    test_setup(settings['PLUG_ADDRESS'], scheduled_for_on=scheduled_for_on, device_on_before_test=device_on_before_test)
+    def _validate_test(self, plug_address, smtp_server, scheduled_for_on, device_on_before_test):
+        plug = SmartPlug(plug_address)
+        if scheduled_for_on:
+            assert plug.state == 'ON'
+        else:
+            assert plug.state == 'OFF'
 
-    logging.info('Managing plug at address %s' % plug_address)
-    plug = SmartPlug(plug_address)
+        messages = smtp_server.pop_messages()
+        if scheduled_for_on == device_on_before_test:
+            assert len(messages) == 0
+        else:
+            assert len(messages) == 1
+            if scheduled_for_on:
+                assert 'turned on' in messages[0]
+            else:
+                assert 'turned off' in messages[0]
 
-    plug.ON = 'ON'
-    plug.OFF = 'OFF'
-    schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
-    watcher = EmailWatcher(settings_path(MAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'])
+    def run_apply_power_schedule(self, plug_address, smtp_server, scheduled_for_on = False, device_on_before_test = False):
+        # print('===\nrunning system test: device=%s schedule=%s' % ('ON' if device_on_before_test else 'OFF', 'ON' if scheduled_for_on else 'OFF'))
 
-    manager = PlugPowerManager(schedule, plug, watcher)
+        self._setup_test(self._settings['PLUG_ADDRESS'], scheduled_for_on=scheduled_for_on, device_on_before_test=device_on_before_test)
 
-    manager.apply_schedule()
+        self._apply_power_schedule(plug_address)
 
-    if scheduled_for_on:
-        assert plug.state == 'ON'
-    else:
-        assert plug.state == 'OFF'
+        self._validate_test(plug_address, smtp_server, scheduled_for_on, device_on_before_test)
+
+    def test_apply_power_schedule_device_off_schedule_off(self):
+        self.run_apply_power_schedule(self._settings['PLUG_ADDRESS'], SmartPlugPowerManagerSystemTest._smtp_server, scheduled_for_on=False, device_on_before_test=False)
+
+    def test_apply_power_schedule_device_off_schedule_on(self):
+        self.run_apply_power_schedule(self._settings['PLUG_ADDRESS'], SmartPlugPowerManagerSystemTest._smtp_server, scheduled_for_on=False, device_on_before_test=True)
+
+    def test_apply_power_schedule_device_on_schedule_off(self):
+        self.run_apply_power_schedule(self._settings['PLUG_ADDRESS'], SmartPlugPowerManagerSystemTest._smtp_server, scheduled_for_on=True, device_on_before_test=False)
+
+    def test_apply_power_schedule_device_on_schedule_on(self):
+        self.run_apply_power_schedule(self._settings['PLUG_ADDRESS'], SmartPlugPowerManagerSystemTest._smtp_server, scheduled_for_on=True, device_on_before_test=True)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename=log_path('powermgr.log'),
-                        level=logging.DEBUG,
-                        format='%(asctime)s %(process)d %(levelname)-8s %(message)s')
-    logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+    logger = logging.getLogger( secure_smtpd.LOG_NAME )
+    logger.setLevel(logging.CRITICAL)
+    logging.basicConfig(level=logging.CRITICAL)
+    unittest.main()
+    sys.exit(0)
 
-    with open(settings_path(SETTINGS_FILE), 'rt') as settings_file:
-        settings = json.loads(settings_file.read())
-
-    server = SSLSMTPServer(
-        ('0.0.0.0', 1025),
-        None,
-        require_authentication=True,
-        ssl=True,
-        certfile='server.crt',
-        keyfile='server.key',
-        credential_validator=FakeCredentialValidator(),
-        maximum_execution_time = 1.0
-        )
-    server.init()
-    server.start()
-
-    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=False, device_on_before_test=False)
-    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=False, device_on_before_test=True)
-    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=True, device_on_before_test=False)
-    power_manager_test(settings['PLUG_ADDRESS'], scheduled_for_on=True, device_on_before_test=True)
-
-    server.stop()
