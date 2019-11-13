@@ -1,4 +1,10 @@
-#!/bin/sh
-./plugpwrmgr_test.py
-./powerschedule_test.py
-./power-manager-system-test -s
+#!/usr/bin/env python3
+import os
+import shutil
+
+if not os.path.exists('settings.json'):
+    shutil.copyfile('settings.template.json', 'settings.json')
+
+os.system('./plugpwrmgr_test.py')
+os.system('./powerschedule_test.py')
+os.system('./power-manager-system-test -s')
