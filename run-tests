@@ -1,0 +1,4 @@
+#!/bin/sh
+./plugpwrmgr_test.py
+./powerschedule_test.py
+./power-manager-system-test -s

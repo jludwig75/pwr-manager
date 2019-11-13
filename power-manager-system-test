@@ -15,10 +15,38 @@ import unittest
 import warnings
 import secure_smtpd
 import shutil
+import argparse
 
 SETTINGS_FILE = 'settings.json'
 POWER_SCHEDULE_FILE = 'power-schedule.json'
 MAIL_SETTINGS_FILE = 'mail_settings.json'
+
+class SmartPlugDummy:
+    ON = 'ON'
+    OFF = 'OFF'
+    def __init__(self, initial_state, responsive = True):
+        self._state = initial_state
+        self._responsive = responsive
+    @property
+    def state(self):
+        return self._state
+    def turn_on(self):
+        if self._responsive:
+            self._state = SmartPlugDummy.ON
+    def turn_off(self):
+        if self._responsive:
+            self._state = SmartPlugDummy.OFF
+
+simulate_smart_plug = False
+plug_list = {}
+
+def create_smart_plug(address):
+    global simulate_smart_plug
+    if simulate_smart_plug:
+        if not address in plug_list:
+            plug_list[address] = SmartPlugDummy(SmartPlugDummy.OFF)
+        return plug_list[address]
+    return SmartPlug(address)
 
 class SmartPlugPowerManagerSystemTest(unittest.TestCase):
     _smtp_server = None
@@ -49,7 +77,7 @@ class SmartPlugPowerManagerSystemTest(unittest.TestCase):
             sched_file.write(json.dumps(sched))
 
     def _apply_power_schedule(self, plug_address):
-        plug = SmartPlug(plug_address)
+        plug = create_smart_plug(plug_address)
         plug.ON = 'ON'
         plug.OFF = 'OFF'
 
@@ -63,7 +91,7 @@ class SmartPlugPowerManagerSystemTest(unittest.TestCase):
 
     def _setup_test(self, plug_address, scheduled_for_on = False, device_on_before_test = False):
         os.system('cp mail_settings.test.json mail_settings.json')
-        plug = SmartPlug(plug_address)
+        plug = create_smart_plug(plug_address)
         if device_on_before_test:
             plug.turn_on()
         else:
@@ -77,7 +105,7 @@ class SmartPlugPowerManagerSystemTest(unittest.TestCase):
         self._gen_sched_file(days_of_month = [today])
 
     def _validate_test(self, plug_address, smtp_server, scheduled_for_on, device_on_before_test):
-        plug = SmartPlug(plug_address)
+        plug = create_smart_plug(plug_address)
         if scheduled_for_on:
             assert plug.state == 'ON'
         else:
@@ -120,8 +148,17 @@ if __name__ == '__main__':
     logger.setLevel(logging.CRITICAL)
     logging.basicConfig(level=logging.CRITICAL)
 
+    parser = argparse.ArgumentParser(description='Apply power schedule to KASA Smart Plugs')
+    parser.add_argument('-s', '--simulate', action='store_true', help='simulat a plug with the given initial state')
+    parser.add_argument('unittest_args', nargs='*')
+    args = parser.parse_args()
+
+    simulate_smart_plug = args.simulate
+
+
     # setup the test files
     shutil.copyfile('mail_settings.test.json', 'mail_settings.json')
 
+    sys.argv[1:] = args.unittest_args
     unittest.main()
 
