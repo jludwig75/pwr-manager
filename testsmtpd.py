@@ -2,6 +2,8 @@ import logging
 import threading
 import os
 import smtpd, ssl
+import sys
+sys.path.append('./secure-smtpd')
 from secure_smtpd import SMTPServer, FakeCredentialValidator, LOG_NAME
 
 class TestCredentialValidator(object):

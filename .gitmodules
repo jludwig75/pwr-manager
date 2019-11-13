@@ -1,0 +1,4 @@
+[submodule "secure-smtpd"]
+	path = secure-smtpd
+	url = git@github.com:jludwig75/secure-smtpd.git
+	branch = pwr-mgr-test
