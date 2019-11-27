@@ -60,7 +60,7 @@ if __name__ == '__main__':
     plug.ON = 'ON'
     plug.OFF = 'OFF'
     schedule = SimplePowerSchedule(settings_path(POWER_SCHEDULE_FILE))
-    watcher = EmailWatcher(settings_path(MAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'])
+    watcher = EmailWatcher(settings_path(MAIL_SETTINGS_FILE), settings['NOTIFICATION_EMAIL_ADDRESS'], settings['NOTIFICATION_SENDER_ADDRESS'])
 
     manager = PlugPowerManager(schedule, plug, watcher)
 

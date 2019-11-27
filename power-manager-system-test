@@ -83,7 +83,7 @@ class SmartPlugPowerManagerSystemTest(unittest.TestCase):
 
         schedule = SimplePowerSchedule(POWER_SCHEDULE_FILE)
 
-        watcher = EmailWatcher(MAIL_SETTINGS_FILE, self._settings['NOTIFICATION_EMAIL_ADDRESS'])
+        watcher = EmailWatcher(MAIL_SETTINGS_FILE, self._settings['NOTIFICATION_EMAIL_ADDRESS'], 'tester@testing.com')
 
         manager = PlugPowerManager(schedule, plug, watcher)
 

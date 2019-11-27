@@ -1,4 +1,5 @@
 {
         "NOTIFICATION_EMAIL_ADDRESS": "address",
+        "NOTIFICATION_SENDER_ADDRESS": "address",
         "PLUG_ADDRESS": "ip address"
 }

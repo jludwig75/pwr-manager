@@ -1,6 +1,6 @@
 {
-        "MAIL_ADDRESS": "bcoe",
-        "MAIL_PASSWORD": "foobar",
+        "SMTP_ACCOUNT": "bcoe",
+        "SMTP_PASSWORD": "foobar",
         "SMTP_SERVER": "localhost",
         "SMTP_PORT": 1025
 }
